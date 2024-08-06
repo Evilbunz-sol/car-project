@@ -1,0 +1,162 @@
+.popular-cars {
+    padding: 50px 0;
+    background-color: #f8f9fa;
+}
+
+.popular-cars h2 {
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 32px;
+}
+
+.car-slider-container {
+    position: relative;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.car-slider {
+    overflow: hidden;
+}
+
+.car-grid {
+    display: flex;
+    transition: transform 0.5s ease-in-out;
+    will-change: transform;
+}
+
+.car-card {
+    flex: 0 0 33.33%;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin: 0 10px;
+    box-sizing: border-box;
+}
+
+.car-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 5px;
+    margin-bottom: 15px;
+}
+
+.car-card h3 {
+    font-size: 20px;
+    margin-bottom: 10px;
+}
+
+.rating {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.star-icon {
+    color: #ffc107;
+    margin-right: 5px;
+}
+
+.reviews {
+    font-size: 14px;
+    color: #666;
+    margin-left: 5px;
+}
+
+.car-features {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 15px;
+    font-size: 14px;
+    color: #666;
+}
+
+.car-price {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.price {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.per-day {
+    font-size: 14px;
+    color: #666;
+}
+
+.rent-now-btn {
+    background-color: #4169E1;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 10px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    width: 100%;
+}
+
+.rent-now-btn:hover {
+    background-color: #3451b3;
+}
+
+.slider-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: rgba(255, 255, 255, 0.7);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    font-size: 20px;
+    color: #4169E1;
+    transition: all 0.3s ease;
+    z-index: 10;
+}
+
+.slider-btn:hover {
+    background-color: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.slider-btn.prev {
+    left: -50px;
+}
+
+.slider-btn.next {
+    right: -50px;
+}
+
+@media (max-width: 1300px) {
+    .slider-btn.prev {
+        left: 10px;
+    }
+
+    .slider-btn.next {
+        right: 10px;
+    }
+}
+
+@media (max-width: 768px) {
+    .car-card {
+        flex: 0 0 100%;
+    }
+
+    .slider-btn {
+        width: 30px;
+        height: 30px;
+        font-size: 16px;
+    }
+}

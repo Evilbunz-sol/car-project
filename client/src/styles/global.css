@@ -1,0 +1,33 @@
+:root {
+    --primary-color: #4169E1;
+    --secondary-color: #F0F8FF;
+    --text-color: #333;
+    --light-text-color: #666;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+    color: var(--text-color);
+}
+
+.landing-page {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.background-shape {
+    position: absolute;
+    top: -100px;
+    right: 100px;
+    width: 600px;
+    height: 600px;
+    background-color: var(--secondary-color);
+    border-radius: 50%;
+    z-index: -1;
+}
