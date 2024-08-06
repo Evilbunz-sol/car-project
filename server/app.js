@@ -6,6 +6,7 @@ const { swaggerUi, specs } = require('./swaggerConfig');
 // express
 const express = require("express")
 const app = express()
+const path = require('path')
 
 // DB
 const connectDB = require("./db/connect")
