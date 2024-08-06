@@ -5,15 +5,15 @@ import HeroSection from '../components/HeroSection';
 import PopularCars from '../components/PopularCars';
 import SearchForm from '../components/SearchForm';
 import HowItWorks from '../components/HowItWorks';
-
 import '../styles/index.css';
+import { API_URL } from "../config"
 
 function LandingPage() {
   const [recommendations, setRecommendations] = useState([]);
 
   const handleGetRecommendations = async (formData) => {
     try {
-      const response = await fetch('http://localhost:3000/api/v1/recommend', {
+      const response = await fetch(`${API_URL}/api/v1/recommend`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
