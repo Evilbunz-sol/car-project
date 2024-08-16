@@ -27,4 +27,22 @@ const getCarDetails = async (req, res) => {
   }
 };
 
-module.exports = { getCarDetails }
+
+const getAllCars = async (req, res) => {
+  const supabase = req.app.locals.supabase;
+
+  try {
+    const { data: cars, error } = await supabase
+      .from('cars')
+      .select('*');
+
+    if (error) throw new CustomError.BadRequestError('Error fetching cars');
+
+    res.status(StatusCodes.OK).json({ cars });
+  } catch (error) {
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ msg: 'Error fetching car details' });
+  }
+};
+
+
+module.exports = { getCarDetails, getAllCars }
