@@ -1,33 +1,21 @@
-// src/pages/LandingPage.jsx
 import React, { useState } from 'react';
 import Header from '../components/Header';
 import HeroSection from '../components/HeroSection';
 import PopularCars from '../components/PopularCars';
 import SearchForm from '../components/SearchForm';
 import HowItWorks from '../components/HowItWorks';
+import { getRecommendations } from '../services/Api';
 import '../styles/index.css';
-import { API_URL } from "../config"
 
 function LandingPage() {
   const [recommendations, setRecommendations] = useState([]);
 
   const handleGetRecommendations = async (formData) => {
     try {
-      const response = await fetch(`${API_URL}/api/v1/recommend`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
+      const data = await getRecommendations(formData);
       setRecommendations(data.recommendations || []);
     } catch (error) {
-      console.error('Error:', error);
-      // Handle error (e.g., show error message to user)
+      console.error('Error fetching recommendations:', error);
     }
   };
 

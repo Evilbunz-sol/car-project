@@ -3,76 +3,90 @@ import { FaStar, FaCog, FaDollarSign, FaChevronLeft, FaChevronRight } from 'reac
 import { PiEngine } from "react-icons/pi";
 import { IoCarSportSharp } from "react-icons/io5";
 
+
 function PopularCars({ cars }) {
-  const totalCars = cars.length;
-  const [currentIndex, setCurrentIndex] = useState(3);
-  const [transitionEnabled, setTransitionEnabled] = useState(true);
-  const carGridRef = useRef(null);
+  const initialState = cars.map((car, index) => ({
+    ...car,
+    active: index < 3, // First 3 cars active initially
+    idx: index,
+    pos: index + 1
+  }));
 
-  const nextSlide = () => {
-    setCurrentIndex((prevIndex) => prevIndex + 1);
+  const [cardState, setCardState] = useState(initialState);
+
+  const handleLeftClick = () => {
+    const prevState = [...cardState];
+    // find next inactive card index - top
+    const nextCardIdx = prevState
+      .filter((ft) => ft.active === true)
+      .sort((a, b) => (a.pos > b.pos ? 1 : b.pos > a.pos ? -1 : 0))[0].idx;
+    // reset
+    prevState.find((f) => f.active === false).active = true;
+    // update
+    prevState.find((f) => f.idx === nextCardIdx).active = false;
+    // maximize pos
+    prevState.find((f) => f.idx === nextCardIdx).pos =
+      Math.max.apply(
+        null,
+        prevState.map(function (o) {
+          return o.pos;
+        })
+      ) + 1;
+
+    // update state
+    setCardState(prevState);
   };
 
-  const prevSlide = () => {
-    setCurrentIndex((prevIndex) => prevIndex - 1);
+  const handleRightClick = () => {
+    const prevState = [...cardState];
+    // find next inactive card index - bottom
+    const nextCardIdx = prevState
+      .filter((ft) => ft.active === true)
+      .sort((a, b) => (a.pos > b.pos ? 1 : b.pos > a.pos ? -1 : 0))
+      .pop(1).idx;
+    // minimize pos
+    prevState.find((f) => f.active === false).pos =
+      Math.min.apply(
+        null,
+        prevState.map(function (o) {
+          return o.pos;
+        })
+      ) - 1;
+    // reset
+    prevState.find((f) => f.active === false).active = true;
+    // update
+    prevState.find((f) => f.idx === nextCardIdx).active = false;
+
+    // update state
+    setCardState(prevState);
   };
 
-  useEffect(() => {
-    let timeout;
-    if (currentIndex === totalCars + 3) {
-      timeout = setTimeout(() => {
-        setTransitionEnabled(false);
-        setCurrentIndex(3);
-      }, 500);
-    } else if (currentIndex === 2) {
-      timeout = setTimeout(() => {
-        setTransitionEnabled(false);
-        setCurrentIndex(totalCars + 2);
-      }, 500);
-    } else {
-      setTransitionEnabled(true);
-    }
-    return () => clearTimeout(timeout);
-  }, [currentIndex, totalCars]);
-
-  // Updated calculateAverageRating function
   const calculateAverageRating = (car) => {
     const { performanceRating, styleRating, resaleValueRating, safetyRating } = car;
     const ratings = [performanceRating, styleRating, resaleValueRating, safetyRating]
-      .map(r => parseFloat(r)) // Convert all ratings to numbers
-      .filter(r => !isNaN(r)); // Filter out invalid numbers
+      .map(r => parseFloat(r))
+      .filter(r => !isNaN(r));
 
-    if (ratings.length === 0) return "No Rating"; // Return "No Rating" if no valid ratings are found
+    if (ratings.length === 0) return "No Rating";
     const average = ratings.reduce((acc, rating) => acc + rating, 0) / ratings.length;
-    return average.toFixed(1); // Return the average rating rounded to one decimal place
+    return average.toFixed(1);
   };
 
   return (
     <div className="popular-cars">
       <h2>Your Recommended Cars</h2>
       <div className="car-slider-container">
-        <button className="slider-btn prev" onClick={prevSlide}><FaChevronLeft /></button>
-        <div className="car-slider">
-          <div
-            className="car-grid"
-            style={{
-              transform: `translateX(-${currentIndex * (100 / 3)}%)`,
-              transition: transitionEnabled ? 'transform 0.5s ease-in-out' : 'none',
-            }}
-            ref={carGridRef}
-            onTransitionEnd={() => {
-              if (!transitionEnabled) {
-                setTransitionEnabled(true);
-              }
-            }}
-          >
-            {[...cars.slice(-3), ...cars, ...cars.slice(0, 3)].map((car, index) => (
+        <button className="slider-btn prev" onClick={handleRightClick}><FaChevronLeft /></button>
+        <div className="car-slider car-grid">
+          {cardState
+            .filter((f) => f.active === true)
+            .sort((a, b) => (a.pos > b.pos ? 1 : b.pos > a.pos ? -1 : 0))
+            .map((car, index) => (
               <div key={index} className="car-card">
-                {/* <img src={car.imageUrl || 'https://via.placeholder.com/350x200'} alt={`${car.make} ${car.model}`} className="car-image" /> */}
                 <h3>{car.make} {car.model}</h3>
                 <div className="rating">
                   <FaStar className="star-icon" />
-                  <span>{calculateAverageRating(car)}</span> {/* Display the average rating */}
+                  <span>{calculateAverageRating(car)}</span>
                 </div>
                 <div className="car-features">
                   <div><PiEngine /> {car.performanceRating || "No Rating"} Performance</div>
@@ -84,15 +98,15 @@ function PopularCars({ cars }) {
                   <span>Price</span>
                   <span className="price">${car.price?.toLocaleString() || 'Not Available'}</span>
                 </div>
-                {/* <button className="rent-now-btn"> Find Listings →</button> */}
               </div>
             ))}
-          </div>
         </div>
-        <button className="slider-btn next" onClick={nextSlide}><FaChevronRight /></button>
+        <button className="slider-btn next" onClick={handleLeftClick}><FaChevronRight /></button>
       </div>
     </div>
   );
 }
 
 export default PopularCars;
+
+  

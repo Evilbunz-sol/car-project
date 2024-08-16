@@ -16,13 +16,23 @@
 }
 
 .car-slider {
-    overflow: hidden;
+    overflow-x: auto;
+    /* Enable horizontal scrolling */
+    scroll-snap-type: x mandatory;
+    /* Apply scroll snapping */
+    scroll-padding: 0 10px;
+    /* Add padding for snap alignment */
+    display: flex;
+    scroll-behavior: smooth;
+    /* Enable smooth scrolling */
 }
 
 .car-grid {
     display: flex;
     transition: transform 0.5s ease-in-out;
     will-change: transform;
+    scroll-snap-type: x mandatory;
+    /* Enable snapping on the grid */
 }
 
 .car-card {
@@ -33,6 +43,8 @@
     padding: 20px;
     margin: 0 10px;
     box-sizing: border-box;
+    scroll-snap-align: start;
+    /* Ensure each card snaps to the start of the container */
 }
 
 .car-image {

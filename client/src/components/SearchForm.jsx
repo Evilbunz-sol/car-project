@@ -1,15 +1,51 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import Select from 'react-select';
 
 function SearchForm({ onSubmit }) {
   const [formData, setFormData] = useState({
     budget: '',
-    carSize: '',
-    fuelType: '',
-    primaryUse: '',
+    body_type: '',
+    make: '',
+    model: '',
+    year: '',
+    trim: '',
   });
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const [makeOptions, setMakeOptions] = useState([]);
+  const [modelOptions, setModelOptions] = useState([]);
+
+  // Fetch all cars when the component mounts
+  useEffect(() => {
+  fetch('http://localhost:3000/api/v1/cars')
+    .then(response => response.json())
+    .then(data => {
+      console.log("API Response:", data); // Log the response to the console
+
+      // Use Set to get unique makes
+      const uniqueMakes = [...new Set(data.cars.map(car => car.make))];
+
+      // Map the unique makes to options for react-select
+      const makeOptions = uniqueMakes.map(make => ({ value: make, label: make }));
+
+      setMakeOptions(makeOptions); // Set the make options for the dropdown
+    })
+    .catch(error => console.error('Error fetching all cars:', error));
+}, []);
+
+
+  // Fetch models based on selected make
+  useEffect(() => {
+    if (formData.make) {
+      const models = [...new Set(data.cars
+        .filter(car => car.make === formData.make)
+        .map(car => car.model))];
+      const modelOptions = models.map(model => ({ value: model, label: model }));
+      setModelOptions(modelOptions);
+    }
+  }, [formData.make]);
+
+  const handleChange = (selectedOption, { name }) => {
+    setFormData({ ...formData, [name]: selectedOption.value });
   };
 
   const handleSubmit = (e) => {
@@ -17,35 +53,33 @@ function SearchForm({ onSubmit }) {
     onSubmit(formData);
   };
 
-
   return (
     <form className="search-form" onSubmit={handleSubmit}>
-      
       <div className="form-group">
         <label htmlFor="budget">Budget</label>
         <select
           id="budget"
           name="budget"
           value={formData.budget}
-          onChange={handleChange}
+          onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
           required
         >
           <option value="">Select budget</option>
-          <option value="Under $10,000">Under $10,000</option>
-          <option value="$10,000 - $20,000">$10,000 - $20,000</option>
-          <option value="$20,000 - $30,000">$20,000 - $30,000</option>
-          <option value="$30,000 - $50,000">$30,000 - $50,000</option>
-          <option value="Over $50,000">Over $50,000</option>
+          <option value="10000">Under $10,000</option>
+          <option value="20000">$10,000 - $20,000</option>
+          <option value="30000">$20,000 - $30,000</option>
+          <option value="50000">$30,000 - $50,000</option>
+          <option value="50001">Over $50,000</option>
         </select>
       </div>
 
       <div className="form-group">
-        <label htmlFor="carSize">Car Size</label>
+        <label htmlFor="body_type">Car Size (Body Type)</label>
         <select
-          id="carSize"
-          name="carSize"
-          value={formData.carSize}
-          onChange={handleChange}
+          id="body_type"
+          name="body_type"
+          value={formData.body_type}
+          onChange={(e) => setFormData({ ...formData, body_type: e.target.value })}
           required
         >
           <option value="">Select car size</option>
@@ -58,42 +92,39 @@ function SearchForm({ onSubmit }) {
       </div>
 
       <div className="form-group">
-        <label htmlFor="primaryUse">Primary Use</label>
-        <select
-          id="primaryUse"
-          name="primaryUse"
-          value={formData.primaryUse}
+        <label htmlFor="make">Make</label>
+        <Select
+          id="make"
+          name="make"
+          options={makeOptions}
           onChange={handleChange}
-          required
-        >
-          <option value="">Select primary use</option>
-          <option value="Commuting">Commuting</option>
-          <option value="Family use">Family use</option>
-          <option value="Off-road adventures">Off-road adventures</option>
-          <option value="Long-distance travel">Long-distance travel</option>
-          <option value="Mixed">Mixed</option>
-        </select>
+          placeholder="Select Make"
+        />
       </div>
-
 
       <div className="form-group">
-        <label htmlFor="mustHaveFeature">Must-Have Feature</label>
-        <select
-          id="mustHaveFeature"
-          name="mustHaveFeature"
-          value={formData.mustHaveFeature}
+        <label htmlFor="model">Model</label>
+        <Select
+          id="model"
+          name="model"
+          options={modelOptions}
           onChange={handleChange}
-          required
-        >
-          <option value="">Select must-have feature</option>
-          <option value="High fuel efficiency">High fuel efficiency</option>
-          <option value="High safety rating">High safety rating</option>
-          <option value="Luxury features">Luxury features</option>
-          <option value="Large cargo space">Large cargo space</option>
-          <option value="Stylish looks">Stylish looks</option>
-        </select>
+          placeholder="Select Model"
+          isDisabled={!formData.make}  // Disable model selection until a make is selected
+        />
       </div>
 
+      <div className="form-group">
+        <label htmlFor="trim">Trim</label>
+        <input
+          id="trim"
+          name="trim"
+          type="text"
+          value={formData.trim}
+          onChange={(e) => setFormData({ ...formData, trim: e.target.value })}
+          placeholder="e.g., XLE"
+        />
+      </div>
 
       <button type="submit" className="search-button">Get Recommendations</button>
     </form>
