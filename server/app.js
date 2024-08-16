@@ -1,4 +1,4 @@
-require("dotenv").config()
+require('dotenv').config()
 require("express-async-errors")
 
 const { swaggerUi, specs } = require('./swaggerConfig');
@@ -9,7 +9,7 @@ const app = express()
 const path = require('path')
 
 // DB
-const connectDB = require("./db/connect")
+const connectSupabase = require('./db/connect')
 
 // Packages
 const rateLimiter = require("express-rate-limit")
@@ -57,15 +57,16 @@ app.use(errorHandlerMiddleware)
 
 // Connect To Local & DB
 const port = process.env.PORT || 3000
-const start = async (req, res) => {
-    try {
-        await connectDB(process.env.MONGO_URI)
-        app.listen(port, () => {
-            console.log("server is litening on port 3000")
-        })
-    } catch (error) {
-        console.log(error)
-    }
+const start = async () => {
+  try {
+    const supabase = connectSupabase()
+    app.locals.supabase = supabase
+    app.listen(port, () => {
+      console.log(`server is listening on port ${port}`)
+    })
+  } catch (error) {
+    console.log(error)
+  }
 }
 
 start()

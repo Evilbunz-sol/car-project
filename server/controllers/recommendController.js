@@ -1,21 +1,24 @@
-const Car = require("../models/Car");
 const matchCars = require("../utils/matchingAlgorithm");
-const {StatusCodes} = require("http-status-codes")
-const CustomError = require("../errors")
+const { StatusCodes } = require("http-status-codes");
+const CustomError = require("../errors");
 
 const getRecommendations = async (req, res) => {
+  const supabase = req.app.locals.supabase;
+  
+  try {
     const userPreferences = req.body;
+    
+    const { data: allCars, error } = await supabase
+      .from('cars')
+      .select('*');
 
-    const allCars = await Car.find({});
-    const recommendations = matchCars(userPreferences, allCars)
+    if (error) throw new CustomError.BadRequestError('Error fetching cars');
 
-    res.status(StatusCodes.OK).json({recommendations, count: recommendations.length});
-  };
+    const recommendations = matchCars(userPreferences, allCars);
+    res.status(StatusCodes.OK).json({ recommendations, count: recommendations.length });
+  } catch (error) {
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ msg: error.message });
+  }
+};
 
-module.exports = { getRecommendations };
-
-
-
-
-
-
+module.exports = { getRecommendations }

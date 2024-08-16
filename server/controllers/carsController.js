@@ -1,32 +1,30 @@
-const Car = require("../models/Car");
-const {StatusCodes} = require("http-status-codes")
-const CustomError = require("../errors")
+const { StatusCodes } = require("http-status-codes");
+const CustomError = require("../errors");
 
-const getCarById = async (req, res) => {
-  const {id:carId} = req.params
-  
-  const car = await Car.findOne({_id: carId})
-  if (!car) {
-    throw new CustomError.NotFoundError("No car found")
+const getCarDetails = async (req, res) => {
+  const supabase = req.app.locals.supabase;
+
+  try {
+    const { data: car, error } = await supabase
+      .from('cars')
+      .select('*')
+      .eq('id', req.params.id)
+      .single();
+
+
+    if (error) throw new CustomError.NotFoundError('Car not found');
+    if (!car) {
+      throw new CustomError.NotFoundError(`No car with id: ${req.params.id}`);
+    }
+
+    res.status(StatusCodes.OK).json({ car });
+  } catch (error) {    
+    if (error instanceof CustomError.NotFoundError) {
+      res.status(StatusCodes.NOT_FOUND).json({ msg: error.message });
+    } else {
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ msg: 'Error fetching car details' });
+    }
   }
+};
 
-  res.status(StatusCodes.OK).json({car})
-}
-
-const getOptions = async (req, res) => {
-    const carSizes = await Car.distinct("carSize");
-    const fuelTypes = await Car.distinct("fuelType");
-    const makes = await Car.distinct("make");
-    const models = await Car.distinct("model");
-    
-    res.status(StatusCodes.OK).json({ carSizes, fuelTypes, makes, models });
-  };
-
-module.exports = {getCarById, getOptions}
-
-
-
-
-
-
-
+module.exports = { getCarDetails }
