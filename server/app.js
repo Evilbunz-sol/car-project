@@ -1,10 +1,6 @@
 require('dotenv').config()
 require("express-async-errors")
 
-console.log('SUPABASE_URL:', process.env.SUPABASE_URL);
-console.log('SUPABASE_API_KEY:', process.env.SUPABASE_API_KEY);
-
-
 const { swaggerUi, specs } = require('./swaggerConfig');
 
 // express
