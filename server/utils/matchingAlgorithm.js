@@ -1,99 +1,145 @@
-// utils/matchingAlgorithm.js
+// matchingalgorithm.js
+const fuzzysort = require('fuzzysort');
 
-function matchCars(userPreferences, carDatabase) {
-  const scoredCars = carDatabase
-    .map(car => ({
-      car,
-      score: calculateScore(userPreferences, car)
-    }))
-    .filter(result => result.score > 0)
-    .sort((a, b) => b.score - a.score);
+// Fuzzy logic functions
+const fuzzyMatch = (search, target) => {
+  if (!search || !target) return 0;
+  const result = fuzzysort.single(search, target);
+  if (!result) return 0;
+  const maxScore = 0; // Exact match score
+  const minScore = -100; // Worst possible score
+  const normalizedScore = (result.score - minScore) / (maxScore - minScore);
+  return normalizedScore;
+};
 
-  return diversifyResults(scoredCars, 5);
-}
+const fuzzyRange = (value, min, max) => {
+  if (typeof min === 'undefined' && typeof max === 'undefined') return 1;
+  if (typeof min === 'undefined') min = value;
+  if (typeof max === 'undefined') max = value;
+  if (min > max) [min, max] = [max, min];
+  if (value >= min && value <= max) return 1;
+  const range = max - min || 1; // Prevent division by zero
+  const distance = Math.min(Math.abs(value - min), Math.abs(value - max));
+  return Math.max(1 - distance / range, 0);
+};
 
-function calculateScore(preferences, car) {
+// MCDM weights
+const weights = {
+  price: 0.4,
+  bodyType: 0.3,
+  year: 0.2,
+  make: 0.1,
+};
+
+const calculateScore = (car, preferences) => {
   let score = 0;
-  const budget = parseInt(preferences.budget);
+  let totalWeight = 0;
 
-  // Budget score (0-50 points)
-  if (budget >= car.base_msrp) {
-    score += 50;
-  } else if (budget * 1.1 >= car.base_msrp) {
-    score += 25;
+  // Price score
+  if (
+    typeof car.base_msrp !== 'undefined' &&
+    (typeof preferences.minPrice !== 'undefined' ||
+      typeof preferences.maxPrice !== 'undefined')
+  ) {
+    const priceScore = fuzzyRange(
+      car.base_msrp,
+      preferences.minPrice,
+      preferences.maxPrice
+    );
+    score += weights.price * priceScore;
+    totalWeight += weights.price;
   }
 
-  // Body type score (0-50 points)
-  if (preferences.body_type === car.body_type) {
-    score += 50;
+  // Body type score
+  if (preferences.bodyType) {
+    const bodyTypeScore = fuzzyMatch(preferences.bodyType, car.body_type);
+    score += weights.bodyType * bodyTypeScore;
+    totalWeight += weights.bodyType;
+  }
+
+  // Year score
+  if (
+    typeof car.year !== 'undefined' &&
+    (typeof preferences.minYear !== 'undefined' ||
+      typeof preferences.maxYear !== 'undefined')
+  ) {
+    const yearScore = fuzzyRange(
+      car.year,
+      preferences.minYear,
+      preferences.maxYear
+    );
+    score += weights.year * yearScore;
+    totalWeight += weights.year;
+  }
+
+  // Make score
+  if (preferences.make) {
+    const makeScore = fuzzyMatch(preferences.make, car.make);
+    score += weights.make * makeScore;
+    totalWeight += weights.make;
+  }
+
+  if (totalWeight > 0) {
+    return score / totalWeight;
   } else {
-    const similarityScore = getBodyTypeSimilarityScore(preferences.body_type, car.body_type);
-    score += similarityScore;
+    return 0;
   }
+};
 
-  // Value for money score (0-20 points)
-  const valueScore = Math.min(20, Math.round((budget - car.base_msrp) / 1000));
-  score += Math.max(0, valueScore);
+const matchCars = (preferences, carDatabase) => {
+  // Filter cars based on hard constraints
+  const filteredCars = carDatabase.filter((car) => {
+    // Price filter
+    if (
+      (typeof preferences.minPrice !== 'undefined' && car.base_msrp < preferences.minPrice) ||
+      (typeof preferences.maxPrice !== 'undefined' && car.base_msrp > preferences.maxPrice)
+    ) {
+      return false; // Exclude car
+    }
 
-  // Popularity score based on body type trend (0-10 points)
-  score += getPopularityScore(car.body_type);
+    // Body type filter (if you want to enforce it strictly)
+    if (preferences.bodyType && car.body_type.toLowerCase() !== preferences.bodyType.toLowerCase()) {
+      return false; // Exclude car
+    }
 
-  return score;
-}
+    // Year filter (if specified)
+    if (
+      (typeof preferences.minYear !== 'undefined' && car.year < preferences.minYear) ||
+      (typeof preferences.maxYear !== 'undefined' && car.year > preferences.maxYear)
+    ) {
+      return false; // Exclude car
+    }
 
-function getBodyTypeSimilarityScore(preferredType, carType) {
-  const similarityMap = {
-    'SUV': { 'Crossover': 30, 'Wagon': 20, 'Truck': 15 },
-    'Sedan': { 'Coupe': 25, 'Hatchback': 20 },
-    'Coupe': { 'Sedan': 25, 'Convertible': 20 },
-    'Hatchback': { 'Sedan': 20, 'Wagon': 15 },
-    'Convertible': { 'Coupe': 20, 'Roadster': 15 },
-    'Truck': { 'SUV': 15, 'Van': 10 },
-    'Wagon': { 'SUV': 20, 'Hatchback': 15 }
-  };
+    return true; // Include car
+  });
 
-  return similarityMap[preferredType]?.[carType] || 0;
-}
+  // Proceed with scoring
+  const scoredCars = filteredCars
+    .map((car) => ({
+      car,
+      score: calculateScore(car, preferences),
+    }))
+    .filter((result) => result.score > 0);
 
-function getPopularityScore(bodyType) {
-  const popularityMap = {
-    'SUV': 10,
-    'Sedan': 8,
-    'Truck': 7,
-    'Crossover': 9,
-    'Hatchback': 6,
-    'Coupe': 5,
-    'Convertible': 4,
-    'Wagon': 3,
-    'Van': 2
-  };
+  // ... [Existing grouping and sorting logic] ...
 
-  return popularityMap[bodyType] || 0;
-}
+  // Create a Map to store the highest-scoring car for each make and model
+  const carMap = new Map();
 
-function diversifyResults(scoredCars, limit) {
-  const diverseResults = [];
-  const seenModels = new Set();
-
-  for (const { car } of scoredCars) {
+  for (const { car, score } of scoredCars) {
     const modelKey = `${car.make}-${car.model}`;
-    if (!seenModels.has(modelKey)) {
-      diverseResults.push(car);
-      seenModels.add(modelKey);
-    }
-
-    if (diverseResults.length >= limit) break;
-  }
-
-  // If we don't have enough diverse results, fill with best scoring cars
-  while (diverseResults.length < limit && scoredCars.length > diverseResults.length) {
-    const nextCar = scoredCars[diverseResults.length].car;
-    if (!diverseResults.includes(nextCar)) {
-      diverseResults.push(nextCar);
+    if (!carMap.has(modelKey) || carMap.get(modelKey).score < score) {
+      carMap.set(modelKey, { car, score });
     }
   }
 
-  return diverseResults;
-}
+  // Convert the Map to an array and sort by score
+  const uniqueScoredCars = Array.from(carMap.values()).sort((a, b) => b.score - a.score);
 
-module.exports = matchCars;
+  // Get the top 5 unique cars
+  const recommendations = uniqueScoredCars.slice(0, 5).map((item) => item.car);
+
+  return recommendations;
+};
+
+module.exports = matchCars

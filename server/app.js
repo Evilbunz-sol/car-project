@@ -16,7 +16,7 @@ const rateLimiter = require("express-rate-limit")
 const helmet = require("helmet")
 const xss = require("xss-clean")
 const cors = require("cors")
-const mongoSanitize = require("express-mongo-sanitize")
+
 
 // Route Import
 const carsRouter = require("./routes/carsRoutes")
@@ -35,7 +35,6 @@ app.use(rateLimiter({
 app.use(helmet())
 app.use(cors())
 app.use(xss())
-app.use(mongoSanitize())
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
@@ -43,12 +42,12 @@ app.use(express.json())
 app.use("/api/v1/cars", carsRouter)
 app.use("/api/v1/recommend", recommendRouter)
 
-// Serve static files from the React frontend app
-app.use(express.static(path.join(__dirname, 'client/dist')));
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'client/dist', 'index.html'));
-})
 
+// Serve static files from the React frontend app
+app.use(express.static(path.join(__dirname, '../client/dist')));
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client/dist', 'index.html'));
+})
 
 // Error Handler Routes
 app.use(notFoundMiddleware)
